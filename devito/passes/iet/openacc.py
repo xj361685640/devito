@@ -116,9 +116,9 @@ class ParallelIteration(Iteration):
     @classmethod
     def _make_construct(cls, parallel=False, **kwargs):
         if parallel:
-            return 'acc parallel loop'
+            return 'acc kernels'
         else:
-            return 'acc parallel loop'
+            return 'acc kernels'
 
     @classmethod
     def _make_clauses(cls, ncollapse=None, chunk_size=None, nthreads=None,

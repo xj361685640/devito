@@ -412,7 +412,7 @@ class PGICompiler(Compiler):
         self.cflags.remove('-Wall')
         self.cflags += ['-fast', '-acc']
         self.cflags += ['-Minfo=accel'] # Print informational messages for compliation
-        self.cflags += ['-ta=multicore']    # Compile for a target GPU architecture
+        self.cflags += ['-ta=tesla']    # Compile for a target GPU architecture
 
     def __lookup_cmds__(self):
         self.CC = 'pgcc'
