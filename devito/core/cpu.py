@@ -4,7 +4,7 @@ from devito.core.operator import OperatorCore
 from devito.exceptions import InvalidOperator
 from devito.ir.clusters import Toposort
 from devito.passes.clusters import Lift, fuse, scalarize, eliminate_arrays, rewrite
-from devito.passes.iet import (DataManager, Blocker, Ompizer, avoid_denormals,
+from devito.passes.iet import (DataManager, Blocker, Ompizer, OpenACCizer, avoid_denormals,
                                optimize_halospots, mpiize, loop_wrapping, hoist_prodders)
 from devito.tools import as_tuple, generator, timed_pass
 
@@ -81,10 +81,12 @@ class CPU64Operator(CPU64NoopOperator):
         blocker.make_blocking(graph)
 
         # Shared-memory and SIMD-level parallelism
-        ompizer = Ompizer()
-        ompizer.make_simd(graph, simd_reg_size=platform.simd_reg_size)
+        #ompizer = Ompizer()
+        openaccizer = OpenACCizer()
+        #ompizer.make_simd(graph, simd_reg_size=platform.simd_reg_size)
+        openaccizer.make_simd(graph, simd_reg_size=platform.simd_reg_size)
         if options['openmp']:
-            ompizer.make_parallel(graph)
+            openaccizer.make_parallel(graph)
 
         # Misc optimizations
         hoist_prodders(graph)
@@ -112,16 +114,18 @@ class CustomOperator(CPU64Operator):
         blocker = Blocker(options['blockinner'],
                           options['blocklevels'] or cls.BLOCK_LEVELS)
 
-        ompizer = Ompizer()
+        # ompizer = Ompizer()
+        openaccizer = OpenACCizer()
 
         return {
             'denormals': partial(avoid_denormals),
             'optcomms': partial(optimize_halospots),
             'wrapping': partial(loop_wrapping),
             'blocking': partial(blocker.make_blocking),
-            'openmp': partial(ompizer.make_parallel),
+            #'openmp': partial(ompizer.make_parallel),
+            'openmp': partial(openaccizer.make_parallel),
             'mpi': partial(mpiize, mode=options['mpi']),
-            'simd': partial(ompizer.make_simd, simd_reg_size=platform.simd_reg_size),
+            'simd': partial(openaccizer.make_simd, simd_reg_size=platform.simd_reg_size),
             'prodders': partial(hoist_prodders)
         }
 

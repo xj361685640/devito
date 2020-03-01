@@ -15,7 +15,7 @@ from devito.passes.iet.engine import iet_pass
 from devito.tools import as_tuple, is_integer, prod
 from devito.types import Constant, Symbol
 
-__all__ = ['NThreads', 'NThreadsNested', 'NThreadsNonaffine', 'Ompizer',
+__all__ = ['NThreads', 'NThreadsNested', 'NThreadsNonaffine', 'Ompizer', 
            'ParallelIteration', 'ParallelTree']
 
 

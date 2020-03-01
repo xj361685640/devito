@@ -83,7 +83,7 @@ class ParallelRegion(Block):
     @classmethod
     def _make_header(cls, nthreads, private):
         private = ('private(%s)' % ','.join(private)) if private else ''
-        return c.Pragma('omp parallel num_threads(%s) %s' % (nthreads.name, private))
+        return #c.Pragma('acc loop gang worker')
 
 
 class ParallelIteration(Iteration):
@@ -116,26 +116,26 @@ class ParallelIteration(Iteration):
     @classmethod
     def _make_construct(cls, parallel=False, **kwargs):
         if parallel:
-            return 'omp parallel for'
+            return 'acc parallel loop'
         else:
-            return 'omp for'
+            return 'acc parallel loop'
 
     @classmethod
     def _make_clauses(cls, ncollapse=None, chunk_size=None, nthreads=None,
                       reduction=None, **kwargs):
         clauses = []
 
-        clauses.append('collapse(%d)' % (ncollapse or 1))
+        #clauses.append('collapse(%d)' % (ncollapse or 1))
 
-        if chunk_size is not False:
-            clauses.append('schedule(dynamic,%s)' % (chunk_size or 1))
+        #if chunk_size is not False:
+        #    clauses.append('schedule(dynamic,%s)' % (chunk_size or 1))
 
-        if nthreads:
-            clauses.append('num_threads(%s)' % nthreads)
+        #if nthreads:
+        #    clauses.append('num_threads(%s)' % nthreads)
 
-        if reduction:
-            args = ','.join(str(i) for i in reduction)
-            clauses.append('reduction(+:%s)' % args)
+        #if reduction:
+        #    args = ','.join(str(i) for i in reduction)
+        #    clauses.append('reduction(+:%s)' % args)
 
         return clauses
 
@@ -231,8 +231,8 @@ class OpenACCizer(object):
     """
 
     lang = {
-        'simd-for': c.Pragma('acc parallel'),
-        'simd-for-aligned': lambda i, j: c.Pragma('acc parallel aligned(%s:%d)' % (i, j)),
+        'simd-for': c.Pragma('acc loop vector'),
+        'simd-for-aligned': lambda i, j: c.Pragma('acc loop vector'),
         'atomic': c.Pragma('acc atomic update')
     }
     """
@@ -394,7 +394,7 @@ class OpenACCizer(object):
             outer = tree[:partree.ncollapsed]
             inner = tree[partree.ncollapsed:]
 
-            # Heuristic: nested parallelism is applied only if the top nested
+            # Heuristic: nested parallelism is applied only if the top 
             # parallel Iteration iterates *within* the top outer parallel Iteration
             # (i.e., the outer is a loop over blocks, while the nested is a loop
             # within a block)
@@ -456,7 +456,7 @@ class OpenACCizer(object):
         # The used `nthreads` arguments
         args = [i for i in FindSymbols().visit(iet) if isinstance(i, (NThreadsMixin))]
 
-        return iet, {'args': args, 'includes': ['omp.h']}
+        return iet, {'args': args, 'includes': ['openacc.h']}
 
     @iet_pass
     def make_simd(self, iet, **kwargs):

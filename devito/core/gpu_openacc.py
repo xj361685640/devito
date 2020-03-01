@@ -9,13 +9,13 @@ from devito.ir.clusters import Toposort
 from devito.ir.iet import MapExprStmts
 from devito.logger import warning
 from devito.passes.clusters import Lift, fuse, scalarize, eliminate_arrays, rewrite
-from devito.passes.iet import (DataManager, Storage, Ompizer, ParallelIteration,
+from devito.passes.iet import (DataManager, Storage, Ompizer, OpenACCizer, ParallelIteration,
                                ParallelTree, optimize_halospots, mpiize, hoist_prodders,
                                iet_pass)
 from devito.tools import as_tuple, filter_sorted, generator, timed_pass
 
-__all__ = ['DeviceOpenMPNoopOperator', 'DeviceOpenMPOperator',
-           'DeviceOpenMPCustomOperator']
+__all__ = ['DeviceOpenACCNoopOperator', 'DeviceOpenACCOperator',
+           'DeviceOpenACCCustomOperator']
 
 
 class DeviceParallelIteration(ParallelIteration):
@@ -280,7 +280,7 @@ class DeviceOpenACCOperator(DeviceOpenACCNoopOperator):
 
 class DeviceOpenACCCustomOperator(DeviceOpenACCOperator):
 
-    _known_passes = ('optcomms', 'openmp', 'mpi', 'prodders')
+    _known_passes = ('optcomms', 'openacc', 'mpi', 'prodders')
     _known_passes_disabled = ('blocking', 'denormals', 'wrapping', 'simd')
     assert not (set(_known_passes) & set(_known_passes_disabled))
 
@@ -292,7 +292,7 @@ class DeviceOpenACCCustomOperator(DeviceOpenACCOperator):
 
         return {
             'optcomms': partial(optimize_halospots),
-            'openmp': partial(openACCizer.make_parallel),
+            'openacc': partial(openACCizer.make_parallel),
             'mpi': partial(mpiize, mode=options['mpi']),
             'prodders': partial(hoist_prodders)
         }
@@ -332,8 +332,8 @@ class DeviceOpenACCCustomOperator(DeviceOpenACCOperator):
             passes_mapper['mpi'](graph)
 
         # GPU parallelism via OpenACC offloading
-        if 'openmp' not in passes:
-            passes_mapper['openmp'](graph)
+        if 'openacc' not in passes:
+            passes_mapper['openacc'](graph)
 
         # Symbol definitions
         data_manager = DeviceDataManager()
